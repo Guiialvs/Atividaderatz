@@ -1,203 +1,100 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
 
-<head>
-    <meta charset="UTF-8">
-    <title>Gerenciador de Tarefas Acadêmicas</title>
-</head>
+{% extends "base.html" %}
 
-<body>
+{% block title %}Dashboard | TaskFlow{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
 
-    <h1>Minhas tarefas acadêmicas</h1>
+{% block content %}
 
-    <!-- Exibe mensagens de sucesso ou erro enviadas pelo Flask -->
-    {% with mensagens = get_flashed_messages(with_categories=true) %}
-        {% for categoria, mensagem in mensagens %}
-            <p>{{ mensagem }}</p>
-        {% endfor %}
-    {% endwith %}
+<section class="welcome-section">
+    <div>
+        <h2>Olá! 👋</h2>
+        <p>Organize suas tarefas e acompanhe seu progresso.</p>
+    </div>
 
+    <a class="btn btn-primary" href="{{ url_for('criar_tarefa') }}">
+        + Nova tarefa
+    </a>
+</section>
 
-    <!-- Formulário usado para cadastrar ou editar uma tarefa -->
-    <h2>
-        {% if tarefa_edicao %}
-            Editar tarefa
-        {% else %}
-            Cadastrar tarefa
-        {% endif %}
-    </h2>
+<section class="stats-grid">
+    <div class="stat-card">
+        <p>Total de tarefas</p>
+        <h3>{{ tarefas|length }}</h3>
+    </div>
 
-    <form
-        action="{% if tarefa_edicao %}{{ url_for('editar_atividade', atividade_id=tarefa_edicao['id']) }}{% else %}{{ url_for('index') }}{% endif %}"
-        method="POST"
-    >
+    <div class="stat-card">
+        <p>Concluídas</p>
+        <h3>{{ tarefas|selectattr('status', 'equalto', 'Concluída')|list|length }}</h3>
+    </div>
 
-        <!-- Campo para informar o nome da atividade -->
-        <label for="atividade">Atividade:</label>
+    <div class="stat-card">
+        <p>Pendentes</p>
+        <h3>{{ tarefas|rejectattr('status', 'equalto', 'Concluída')|list|length }}</h3>
+    </div>
+</section>
 
-        <input
-            type="text"
-            id="atividade"
-            name="atividade"
-            value="{{ valores.atividade }}"
-            required
-        >
+<section class="tasks-section">
+    <div class="section-header">
+        <div>
+            <h2>Tarefas recentes</h2>
+            <p>Acompanhe suas atividades.</p>
+        </div>
 
-        <br><br>
-
-
-        <!-- Campo para selecionar a data de entrega -->
-        <label for="prazo">Prazo:</label>
-
-        <input
-            type="date"
-            id="prazo"
-            name="prazo"
-            value="{{ valores.prazo }}"
-            required
-        >
-
-        <br><br>
-
-
-        <!-- Campo para selecionar a prioridade -->
-        <label for="prioridade">Prioridade:</label>
-
-        <select id="prioridade" name="prioridade" required>
-
-            <option value="baixa"
-                {% if valores.prioridade == 'baixa' %}selected{% endif %}>
-                Baixa
-            </option>
-
-            <option value="media"
-                {% if valores.prioridade == 'media' %}selected{% endif %}>
-                Média
-            </option>
-
-            <option value="alta"
-                {% if valores.prioridade == 'alta' %}selected{% endif %}>
-                Alta
-            </option>
-
-        </select>
-
-        <br><br>
-
-
-        <!-- Campo para selecionar o status da tarefa -->
-        <label for="status">Status:</label>
-
-        <select id="status" name="status" required>
-
-            <option value="pendente"
-                {% if valores.status == 'pendente' %}selected{% endif %}>
-                Pendente
-            </option>
-
-            <option value="em_andamento"
-                {% if valores.status == 'em_andamento' %}selected{% endif %}>
-                Em andamento
-            </option>
-
-            <option value="concluida"
-                {% if valores.status == 'concluida' %}selected{% endif %}>
-                Concluída
-            </option>
-
-        </select>
-
-        <br><br>
-
-
-        <!-- O texto do botão muda conforme a operação -->
-        <button type="submit">
-            {% if tarefa_edicao %}
-                Salvar alterações
-            {% else %}
-                Cadastrar tarefa
-            {% endif %}
-        </button>
-
-        {% if tarefa_edicao %}
-            <a href="{{ url_for('index') }}">Cancelar edição</a>
-        {% endif %}
-
-    </form>
-
-
-    <hr>
-
-
-    <!-- Lista as tarefas cadastradas no banco de dados -->
-    <h2>Tarefas cadastradas</h2>
-
-    {% for tarefa in tarefas %}
-
-        <hr>
-
-        <p>
-            <strong>ID:</strong>
-            {{ tarefa["id"] }}
-            <br>
-
-            <strong>Atividade:</strong>
-            {{ tarefa["atividade"] }}
-            <br>
-
-            <strong>Prazo:</strong>
-            {{ tarefa["prazo"] }}
-            <br>
-
-            <strong>Prioridade:</strong>
-
-            {% if tarefa["prioridade"] == "baixa" %}
-                Baixa
-            {% elif tarefa["prioridade"] == "media" %}
-                Média
-            {% else %}
-                Alta
-            {% endif %}
-
-            <br>
-
-            <strong>Status:</strong>
-
-            {% if tarefa["status"] == "pendente" %}
-                Pendente
-            {% elif tarefa["status"] == "em_andamento" %}
-                Em andamento
-            {% else %}
-                Concluída
-            {% endif %}
-
-        </p>
-
-
-        <!-- Link que abre a tarefa no modo de edição -->
-        <a href="{{ url_for('editar_atividade', atividade_id=tarefa['id']) }}">
-            Editar tarefa
+        <a class="text-link" href="{{ url_for('index') }}">
+            Ver todas →
         </a>
+    </div>
 
+    {% if tarefas %}
+        <div class="tasks-list">
+            {% for tarefa in tarefas[:5] %}
+                <article class="task-card">
+                    <div class="task-info">
+                        <h3>{{ tarefa.atividade }}</h3>
 
-        <!-- Formulário que envia o ID para a rota de exclusão -->
-        <form
-            action="{{ url_for('excluir_atividade', atividade_id=tarefa['id']) }}"
-            method="POST"
-        >
+                        <p>
+                            Prazo:
+                            {{ tarefa.prazo if tarefa.prazo else 'Não definido' }}
+                        </p>
+                    </div>
 
-            <button type="submit">
-                Excluir tarefa
-            </button>
+                    <div class="task-meta">
+                        <span class="priority priority-{{ tarefa.prioridade|lower }}">
+                            {{ tarefa.prioridade }}
+                        </span>
 
-        </form>
+                        <span class="status">
+                            {{ tarefa.status }}
+                        </span>
+                    </div>
 
+                    <div class="task-actions">
+                        <a href="{{ url_for('editar_tarefa', atividade_id=tarefa.id) }}">
+                            Editar
+                        </a>
+
+                        <form method="POST"
+                              action="{{ url_for('excluir_tarefa', atividade_id=tarefa.id) }}"
+                              onsubmit="return confirm('Deseja excluir esta tarefa?');">
+                            <button type="submit" class="delete-button">
+                                Excluir
+                            </button>
+                        </form>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
     {% else %}
+        <div class="empty-state">
+            <h3>Nenhuma tarefa cadastrada</h3>
+            <p>Comece adicionando sua primeira tarefa.</p>
 
-        <!-- Mensagem exibida quando ainda não existem tarefas -->
-        <p>Nenhuma tarefa cadastrada.</p>
+            <a class="btn btn-primary" href="{{ url_for('criar_tarefa') }}">
+                Criar primeira tarefa
+            </a>
+        </div>
+    {% endif %}
+</section>
 
-    {% endfor %}
-
-</body>
-</html>
+{% endblock %}

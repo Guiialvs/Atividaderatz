@@ -1,0 +1,66 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+    {% if tarefa_edicao %}Editar tarefa{% else %}Nova tarefa{% endif %} | TaskFlow
+{% endblock %}
+
+{% block page_title %}
+    {% if tarefa_edicao %}Editar tarefa{% else %}Nova tarefa{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="tasks-section">
+    <h2>
+        {% if tarefa_edicao %}
+            Atualize sua tarefa
+        {% else %}
+            Cadastre uma nova tarefa
+        {% endif %}
+    </h2>
+
+    <form method="POST"
+          action="{% if tarefa_edicao %}{{ url_for('editar_tarefa', atividade_id=tarefa_edicao['id']) }}{% else %}{{ url_for('criar_tarefa') }}{% endif %}">
+
+        <label for="atividade">Nome da tarefa</label>
+        <input
+            type="text"
+            id="atividade"
+            name="atividade"
+            value="{{ valores.atividade }}"
+            required
+        >
+
+        <label for="prazo">Prazo</label>
+        <input
+            type="date"
+            id="prazo"
+            name="prazo"
+            value="{{ valores.prazo }}"
+            required
+        >
+
+        <label for="prioridade">Prioridade</label>
+        <select id="prioridade" name="prioridade" required>
+            <option value="">Selecione</option>
+            <option value="baixa" {% if valores.prioridade == 'baixa' %}selected{% endif %}>Baixa</option>
+            <option value="media" {% if valores.prioridade == 'media' %}selected{% endif %}>Média</option>
+            <option value="alta" {% if valores.prioridade == 'alta' %}selected{% endif %}>Alta</option>
+        </select>
+
+        <label for="status">Status</label>
+        <select id="status" name="status" required>
+            <option value="">Selecione</option>
+            <option value="pendente" {% if valores.status == 'pendente' %}selected{% endif %}>Pendente</option>
+            <option value="em_andamento" {% if valores.status == 'em_andamento' %}selected{% endif %}>Em andamento</option>
+            <option value="concluida" {% if valores.status == 'concluida' %}selected{% endif %}>Concluída</option>
+        </select>
+
+        <button type="submit" class="btn btn-primary">
+            {% if tarefa_edicao %}Salvar alterações{% else %}Cadastrar tarefa{% endif %}
+        </button>
+
+        <a class="text-link" href="{{ url_for('index') }}">Cancelar</a>
+    </form>
+</section>
+{% endblock %}

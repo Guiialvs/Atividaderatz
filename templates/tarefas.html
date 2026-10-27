@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Minhas tarefas | Agenda Acadêmica{% endblock %}
+{% block content %}
+<div class="page-heading">
+    <div><span class="eyebrow">ORGANIZAÇÃO</span><h1>Minhas tarefas</h1><p class="muted">Consulte, atualize ou remova suas atividades.</p></div>
+    <a class="button button-primary" href="{{ url_for('criar_tarefa') }}">＋ Nova tarefa</a>
+</div>
+<section class="panel">
+    <div class="panel-heading"><div><h2>Lista de atividades</h2><p class="muted">{{ tarefas|length }} tarefa(s) cadastrada(s)</p></div></div>
+    {% if tarefas %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>ATIVIDADE</th><th>PRAZO</th><th>PRIORIDADE</th><th>STATUS</th><th>AÇÕES</th></tr></thead>
+            <tbody>
+            {% for tarefa in tarefas %}
+            <tr>
+                <td><strong>{{ tarefa["atividade"] }}</strong><small class="subline">Tarefa #{{ tarefa["id"] }}</small></td>
+                <td>{{ tarefa["prazo"] }}</td>
+                <td><span class="pill priority-{{ tarefa['prioridade'] }}">{{ {'baixa':'Baixa','media':'Média','alta':'Alta'}[tarefa['prioridade']] }}</span></td>
+                <td><span class="pill status-{{ tarefa['status'] }}">{{ {'pendente':'Pendente','em_andamento':'Em andamento','concluida':'Concluída'}[tarefa['status']] }}</span></td>
+                <td><div class="actions"><a class="button button-quiet button-small" href="{{ url_for('editar_atividade', atividade_id=tarefa['id']) }}">Editar</a><form action="{{ url_for('excluir_atividade', atividade_id=tarefa['id']) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta tarefa?');"><button class="button button-danger button-small" type="submit">Excluir</button></form></div></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><div class="empty-icon">☷</div><h3>Nenhuma tarefa cadastrada</h3><p>Adicione uma atividade para começar.</p><a class="button button-primary" href="{{ url_for('criar_tarefa') }}">Criar tarefa</a></div>
+    {% endif %}
+</section>
+{% endblock %}

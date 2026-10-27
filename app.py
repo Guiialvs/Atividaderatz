@@ -1,3 +1,4 @@
+
 import os
 from datetime import date
 from flask import Flask, flash, redirect, render_template, request, url_for
@@ -5,139 +6,158 @@ from flask import Flask, flash, redirect, render_template, request, url_for
 from database import close_db, init_db, get_db
 
 app = Flask(__name__)
-
-# Chave usada pelo Flask para gerenciar mensagens e sessões.
 app.config["SECRET_KEY"] = os.environ.get(
-    "SECRET_KEY", "chave-de-desenvolvimento-troque-em-producao"
+    "SECRET_KEY",
+    "chave-de-desenvolvimento"
 )
 
-# Fecha a conexão com o banco ao terminar a requisição.
 app.teardown_appcontext(close_db)
 
 
-@app.route("/", methods=["GET"])
-def index():
-
-    db = get_db()
-
-    # Busca as tarefas cadastradas.
-    tarefas = db.execute(
-        """
-        SELECT id, atividade, prazo, prioridade, status
-        FROM tarefas
-        ORDER BY id DESC
-        """
-    ).fetchall()
-
-    # Exibe o formulário e a lista de tarefas no mesmo HTML.
-    return render_template(
-        "index.html",
-        tarefas=tarefas,
-        valores=valores
-    )
-
-@app.route("/criar", methods=["POST"])
-def criar_tarefa():
-    
-    db = get_db()
-
-# Valores iniciais do formulário.
-    valores = {
+def valores_vazios():
+    return {
         "atividade": "",
         "prazo": "",
         "prioridade": "",
-        "status": ""
+        "status": "pendente"
     }
 
-    # Verifica se o formulário foi enviado.
-    if request.method == "POST":
 
-        # Recebe os dados preenchidos no HTML.
-        valores = {
-            "atividade": request.form.get("atividade", "").strip(),
-            "prazo": request.form.get("prazo", "").strip(),
-            "prioridade": request.form.get("prioridade", "").strip(),
-            "status": request.form.get("status", "").strip()
-        }
-
-        # Verifica se todos os campos foram preenchidos.
-        if not all(valores.values()):
-            flash("Preencha todos os campos.", "erro")
-
-        else:
-            # Verifica se a data informada é válida.
-            try:
-                date.fromisoformat(valores["prazo"])
-            except ValueError:
-                flash("Informe um prazo válido.", "erro")
-
-            else:
-                # Verifica se a prioridade é permitida.
-                if valores["prioridade"] not in ("baixa", "media", "alta"):
-                    flash("Selecione uma prioridade válida.", "erro")
-
-                # Verifica se o status é permitido.
-                elif valores["status"] not in (
-                    "pendente", "em_andamento", "concluida"
-                ):
-                    flash("Selecione um status válido.", "erro")
-
-                else:
-                    # Salva a tarefa no banco de dados.
-                    db.execute(
-                        """
-                        INSERT INTO tarefas
-                        (atividade, prazo, prioridade, status)
-                        VALUES (?, ?, ?, ?)
-                        """,
-                        (
-                            valores["atividade"],
-                            valores["prazo"],
-                            valores["prioridade"],
-                            valores["status"]
-                        )
-                    )
-
-                    # Confirma a gravação dos dados.
-                    db.commit()
-
-                    flash("Tarefa cadastrada com sucesso!", "sucesso")
-
-                    # Volta para a página inicial.
-                    return redirect(url_for("index"))
+def buscar_tarefas():
+    db = get_db()
+    return db.execute("""
+        SELECT id, atividade, prazo, prioridade, status
+        FROM tarefas
+        ORDER BY id DESC
+    """).fetchall()
 
 
-@app.route("/excluir/<int:atividade_id>", methods=["POST"])
-def excluir_atividade(atividade_id):
+def buscar_tarefa(atividade_id):
+    db = get_db()
+    return db.execute("""
+        SELECT id, atividade, prazo, prioridade, status
+        FROM tarefas
+        WHERE id = ?
+    """, (atividade_id,)).fetchone()
+
+
+def validar_tarefa(valores):
+    if not all(valores.values()):
+        return "Preencha todos os campos."
+
+    try:
+        date.fromisoformat(valores["prazo"])
+    except ValueError:
+        return "Informe um prazo válido."
+
+    if valores["prioridade"] not in ("baixa", "media", "alta"):
+        return "Selecione uma prioridade válida."
+
+    if valores["status"] not in (
+        "pendente", "em_andamento", "concluida"
+    ):
+        return "Selecione um status válido."
+
+    return None
+
+
+def ler_formulario():
+    return {
+        "atividade": request.form.get("atividade", "").strip(),
+        "prazo": request.form.get("prazo", "").strip(),
+        "prioridade": request.form.get("prioridade", "").strip(),
+        "status": request.form.get("status", "").strip()
+    }
+
+
+@app.route("/")
+def index():
+    return render_template(
+        "index.html",
+        tarefas=buscar_tarefas(),
+        valores=valores_vazios(),
+        tarefa_edicao=None,
+        mostrar_todas=False
+    )
+
+
+# Tela com todas as tarefas
+@app.route("/tarefas")
+def tarefas():
+    return render_template(
+        "index.html",
+        tarefas=buscar_tarefas(),
+        valores=valores_vazios(),
+        tarefa_edicao=None,
+        mostrar_todas=True
+    )
+
+
+# Abre o formulário e cadastra uma tarefa
+@app.route("/criar", methods=["GET", "POST"])
+def criar_tarefa():
+    if request.method == "GET":
+        return render_template(
+            "formulario.html",
+            valores=valores_vazios(),
+            tarefa_edicao=None
+        )
+
+    valores = ler_formulario()
+    erro = validar_tarefa(valores)
+
+    if erro:
+        flash(erro, "erro")
+        return render_template(
+            "formulario.html",
+            valores=valores,
+            tarefa_edicao=None
+        )
 
     db = get_db()
-    cursor = db.execute("DELETE FROM tarefas WHERE id = ?", (atividade_id,))
+    db.execute("""
+        INSERT INTO tarefas
+        (atividade, prazo, prioridade, status)
+        VALUES (?, ?, ?, ?)
+    """, (
+        valores["atividade"],
+        valores["prazo"],
+        valores["prioridade"],
+        valores["status"]
+    ))
+    db.commit()
+
+    flash("Tarefa cadastrada com sucesso!", "sucesso")
+    return redirect(url_for("index"))
+
+
+# Exclui uma tarefa
+@app.route("/excluir/<int:atividade_id>", methods=["POST"])
+def excluir_tarefa(atividade_id):
+    db = get_db()
+    cursor = db.execute(
+        "DELETE FROM tarefas WHERE id = ?",
+        (atividade_id,)
+    )
     db.commit()
 
     if cursor.rowcount == 0:
-        flash("Essa tarefa não existe ou já foi excluído.", "erro")
+        flash("Tarefa não encontrada.", "erro")
     else:
-        flash("tarefa excluída com sucesso.", "sucesso")
+        flash("Tarefa excluída com sucesso!", "sucesso")
 
     return redirect(url_for("index"))
 
+
+# Abre o formulário e atualiza uma tarefa
 @app.route("/editar/<int:atividade_id>", methods=["GET", "POST"])
-def editar_atividade(atividade_id):
+def editar_tarefa(atividade_id):
+    tarefa = buscar_tarefa(atividade_id)
 
-    db = get_db()
-
-    # Busca a tarefa que será editada.
-    tarefa = db.execute(
-        "SELECT * FROM tarefas WHERE id = ?",
-        (atividade_id,)
-    ).fetchone()
-
-    # Verifica se a tarefa existe.
     if tarefa is None:
         flash("Tarefa não encontrada.", "erro")
         return redirect(url_for("index"))
 
-    # Preenche o formulário com os dados atuais.
     valores = {
         "atividade": tarefa["atividade"],
         "prazo": tarefa["prazo"],
@@ -145,78 +165,41 @@ def editar_atividade(atividade_id):
         "status": tarefa["status"]
     }
 
-    # Verifica se o formulário de edição foi enviado.
     if request.method == "POST":
+        valores = ler_formulario()
+        erro = validar_tarefa(valores)
 
-        valores = {
-            "atividade": request.form.get("atividade", "").strip(),
-            "prazo": request.form.get("prazo", "").strip(),
-            "prioridade": request.form.get("prioridade", "").strip(),
-            "status": request.form.get("status", "").strip()
-        }
-
-        if not all(valores.values()):
-            flash("Preencha todos os campos.", "erro")
-
+        if erro:
+            flash(erro, "erro")
         else:
-            try:
-                date.fromisoformat(valores["prazo"])
-            except ValueError:
-                flash("Informe um prazo válido.", "erro")
+            db = get_db()
+            db.execute("""
+                UPDATE tarefas
+                SET atividade = ?, prazo = ?,
+                    prioridade = ?, status = ?
+                WHERE id = ?
+            """, (
+                valores["atividade"],
+                valores["prazo"],
+                valores["prioridade"],
+                valores["status"],
+                atividade_id
+            ))
+            db.commit()
 
-            else:
-                if valores["prioridade"] not in ("baixa", "media", "alta"):
-                    flash("Prioridade inválida.", "erro")
+            flash("Tarefa atualizada com sucesso!", "sucesso")
+            return redirect(url_for("index"))
 
-                elif valores["status"] not in (
-                    "pendente", "em_andamento", "concluida"
-                ):
-                    flash("Status inválido.", "erro")
-
-                else:
-                    # Atualiza os dados da tarefa no banco.
-                    db.execute(
-                        """
-                        UPDATE tarefas
-                        SET atividade = ?, prazo = ?, prioridade = ?, status = ?
-                        WHERE id = ?
-                        """,
-                        (
-                            valores["atividade"],
-                            valores["prazo"],
-                            valores["prioridade"],
-                            valores["status"],
-                            atividade_id
-                        )
-                    )
-
-                    db.commit()
-
-                    flash("Tarefa atualizada com sucesso!", "sucesso")
-                    return redirect(url_for("index"))
-
-    # Busca todas as tarefas para manter a listagem na página.
-    tarefas = db.execute(
-        """
-        SELECT id, atividade, prazo, prioridade, status
-        FROM tarefas
-        ORDER BY id DESC
-        """
-    ).fetchall()
-
-    # Reutiliza o mesmo HTML para editar e listar.
     return render_template(
-        "index.html",
-        tarefas=tarefas,
+        "formulario.html",
         valores=valores,
-        tarefa_edicao=None
+        tarefa_edicao=tarefa
     )
 
-# Cria a tabela caso ela ainda não exista.
+
 with app.app_context():
     init_db()
 
 
-# Inicia o servidor Flask.
 if __name__ == "__main__":
     app.run(debug=True)
