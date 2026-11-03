@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{#
+  ARQUIVO: index.html
+  O QUE FAZ: dashboard com números e a tabela de tarefas.
+  A tabela começa vazia: o dashboard.js busca os dados na API e preenche.
+#}
+
+{% block title %}Dashboard | Agenda Acadêmica{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <span class="eyebrow">ORGANIZAÇÃO</span>
+        <h1>Minhas tarefas</h1>
+        <p class="muted">Consulte, atualize ou remova suas atividades.</p>
+    </div>
+    <a class="button button-primary" href="{{ url_for('pagina_nova') }}">＋ Nova tarefa</a>
+</div>
+
+<!-- Quadros com os totais (preenchidos pelo JavaScript) -->
+<section class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon icon-purple">☷</div><span class="stat-caption">TOTAL</span></div>
+        <div class="stat-number" id="total">0</div>
+        <p class="stat-label">Tarefas cadastradas</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon icon-orange">◔</div><span class="stat-caption">PENDENTES</span></div>
+        <div class="stat-number" id="pendentes">0</div>
+        <p class="stat-label">Ainda não começaram</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon icon-blue">↻</div><span class="stat-caption">EM ANDAMENTO</span></div>
+        <div class="stat-number" id="andamento">0</div>
+        <p class="stat-label">Sendo feitas agora</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon icon-green">✓</div><span class="stat-caption">CONCLUÍDAS</span></div>
+        <div class="stat-number" id="concluidas">0</div>
+        <p class="stat-label">Já finalizadas</p>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <h2>Lista de atividades</h2>
+            <p class="muted" id="contador">Carregando...</p>
+        </div>
+        <!-- Filtro: ao mudar, o JavaScript chama GET /api/tarefas?status=... -->
+        <div class="field" style="margin:0">
+            <select id="filtro" aria-label="Filtrar por status">
+                <option value="">Todos os status</option>
+                <option value="pendente">Pendente</option>
+                <option value="em_andamento">Em andamento</option>
+                <option value="concluida">Concluída</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-wrap" id="area-tabela" hidden>
+        <table>
+            <thead>
+                <tr><th>ATIVIDADE</th><th>PRAZO</th><th>PRIORIDADE</th><th>STATUS</th><th>AÇÕES</th></tr>
+            </thead>
+            <tbody id="corpo-tabela"></tbody>
+        </table>
+    </div>
+
+    <div class="empty-state" id="area-vazia" hidden>
+        <div class="empty-icon">☷</div>
+        <h3>Nenhuma tarefa encontrada</h3>
+        <p>Adicione uma atividade para começar.</p>
+        <a class="button button-primary" href="{{ url_for('pagina_nova') }}">Criar tarefa</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{#
+  ARQUIVO: formulario.html
+  O QUE FAZ: formulário usado para CADASTRAR e para EDITAR uma tarefa.
+  Se "tarefa_id" existir, estamos editando; se for vazio, estamos cadastrando.
+  Quem envia os dados para a API é o formulario.js.
+#}
+
+{% block title %}{{ 'Editar tarefa' if tarefa_id else 'Nova tarefa' }} | Agenda Acadêmica{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <span class="eyebrow">{{ 'EDIÇÃO' if tarefa_id else 'CADASTRO' }}</span>
+        <h1>{{ 'Editar tarefa' if tarefa_id else 'Nova tarefa' }}</h1>
+        <p class="muted">Preencha os dados da atividade acadêmica.</p>
+    </div>
+</div>
+
+<div class="form-layout">
+    <section class="panel form-panel">
+        <div class="form-section-title">
+            <div class="step-number">1</div>
+            <div>
+                <h2>Dados da tarefa</h2>
+                <p class="muted">Todos os campos são obrigatórios.</p>
+            </div>
+        </div>
+
+        <!-- data-tarefa-id deixa o id disponível para o JavaScript ler -->
+        <form id="formulario" data-tarefa-id="{{ tarefa_id or '' }}">
+            <div class="field">
+                <label for="atividade">Nome da atividade <span>*</span></label>
+                <input type="text" id="atividade" maxlength="100" placeholder="Ex.: Entregar relatório de Banco de Dados">
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="prazo">Prazo <span>*</span></label>
+                    <input type="date" id="prazo">
+                </div>
+                <div class="field">
+                    <label for="prioridade">Prioridade <span>*</span></label>
+                    <select id="prioridade">
+                        <option value="">Selecione</option>
+                        <option value="baixa">Baixa</option>
+                        <option value="media">Média</option>
+                        <option value="alta">Alta</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="status">Status <span>*</span></label>
+                <select id="status">
+                    <option value="pendente">Pendente</option>
+                    <option value="em_andamento">Em andamento</option>
+                    <option value="concluida">Concluída</option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <a class="button button-quiet" href="{{ url_for('index') }}">Cancelar</a>
+                <button type="submit" class="button button-primary">
+                    {{ 'Salvar alterações' if tarefa_id else 'Cadastrar tarefa' }}
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <aside class="tip-card">
+        <div class="tip-symbol">★</div>
+        <h3>Dica</h3>
+        <p>Use a prioridade para decidir o que fazer primeiro.</p>
+        <div class="tip-divider"></div>
+        <p class="tip-small">As regras de validação ficam na API. Se algo estiver errado, a mensagem aparece no topo.</p>
+    </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='formulario.js') }}"></script>
+{% endblock %}

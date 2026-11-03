@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!--
+  ARQUIVO: base.html
+  O QUE FAZ: é o "molde" de todas as páginas (menu lateral, topo e rodapé).
+  As outras páginas "herdam" este arquivo e só preenchem os blocos.
+-->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <!-- Faz a página se ajustar ao celular (responsiva) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Agenda Acadêmica{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Menu lateral -->
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-mark">✓</span>
+            <span>Agenda <span class="brand-light">Acadêmica</span></span>
+        </div>
+
+        <p class="nav-label">MENU</p>
+        <nav>
+            <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}"
+               href="{{ url_for('index') }}">◫ <span>Dashboard</span></a>
+            <a class="nav-link {% if request.endpoint == 'pagina_nova' %}active{% endif %}"
+               href="{{ url_for('pagina_nova') }}">＋ <span>Nova tarefa</span></a>
+        </nav>
+
+        <div class="sidebar-note">
+            <div class="note-icon">i</div>
+            <strong>Organize seu dia</strong>
+            <p>Cadastre suas atividades, defina prazos e acompanhe o andamento.</p>
+        </div>
+        <div class="sidebar-footer">API REST · TDD · GIT</div>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <div>
+                <span class="eyebrow">TÉCNICAS AVANÇADAS DE PROGRAMAÇÃO WEB E MOBILE</span>
+                <p class="topbar-title">Gerenciador de tarefas acadêmicas</p>
+            </div>
+        </header>
+
+        <section class="page-content">
+            <!-- Caixa de mensagens (erro ou sucesso). O JavaScript preenche e mostra. -->
+            <div id="mensagem" class="flash" role="alert" hidden></div>
+
+            {% block content %}{% endblock %}
+        </section>
+
+        <footer class="footer">Fatec Araras <span>•</span> Atividade prática</footer>
+    </div>
+
+    <!-- api.js tem funções compartilhadas por todas as páginas -->
+    <script src="{{ url_for('static', filename='api.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

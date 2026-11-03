@@ -1,0 +1,15 @@
+
+# Banco de dados local
+instance/
+*.sqlite3
+*.db
+
+# Arquivos temporarios do Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Arquivos de configuracao
+.env
+
